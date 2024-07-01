@@ -4,54 +4,34 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import { Reflect } from './Reflect'
+import levels from './levels'
 
-export default function App() {
-  return (
-    <Canvas orthographic camera={{ zoom: 100 }}>
-      <color attach="background" args={['#223']} />
-      <Scene>
-        {/* Any object in here will receive ray events */}
-        <Block scale={0.5} position={[0.25, -0.15, 0]} />
-        <Block scale={0.5} position={[-2, 1.2, 0]} rotation={[0, 0, -0.55]} />
-        <Triangle scale={0.4} position={[-1.5, -1.2, 0]} rotation={[Math.PI / 2, Math.PI, 0]} />
-      </Scene>
-      <EffectComposer>
-        <Bloom mipmapBlur luminanceThreshold={2} luminanceSmoothing={0.0} intensity={1} />
-      </EffectComposer>
-    </Canvas>
-  )
-}
-function handle_hovered(data)
-{
-  // console.log("data",data)
-  if(data.game_over)
+export default function App({level}) {
+  
+  const [objects, setObjects] = useState(levels[level])
+  if(!objects)
   {
-    console.log("win")
+    alert("Erreur")
+    return
   }
-}
-function Block(props) {
-  const [hovered, hover] = useState(false)
+  
   return (
-    <mesh onRayOver={(e) => (hover(true), handle_hovered(e))} onRayOut={(e) => hover(false)} {...props}>
-      <boxGeometry />
-      <meshBasicMaterial color={hovered ? [4, 2, 0] : 'orange'} />
-    </mesh>
+    <>
+      <h1 className='level-label '>Level {level}</h1>
+      <Canvas orthographic camera={{ zoom: 100 }}>
+        <color attach="background" args={['#223']} />
+        <Scene>
+          {/* Any object in here will receive ray events */}
+          {objects.map((object) =>  object )}
+        </Scene>
+        <EffectComposer>
+          <Bloom mipmapBlur luminanceThreshold={2} luminanceSmoothing={0.0} intensity={1} />
+        </EffectComposer>
+      </Canvas>
+    </>
   )
 }
 
-function Triangle(props) {
-  const [hovered, hover] = useState(false)
-  return (
-    <mesh {...props} 
-      onRayOver={(e) => (e.stopPropagation(), hover(true), handle_hovered(e))} 
-      onRayOut={(e) => hover(false)} 
-      // onRayMove={(e) => null /*console.log(e.direction)*/}
-    >
-      <cylinderGeometry args={[1, 1, 1, 3, 1]} />
-      <meshBasicMaterial color={hovered ? [5.5, 1, 2] : 'hotpink'} />
-    </mesh>
-  )
-}
 
 function Scene({ children }) {
   const streaks = useRef()
