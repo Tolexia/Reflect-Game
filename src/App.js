@@ -9,6 +9,21 @@ import levels from './levels'
 export default function App({level}) {
   
   const [objects, setObjects] = useState(levels[level])
+
+  function next_level(data)
+  {
+    // console.log("data",data)
+    if(data.game_over)
+    {
+      level++
+      localStorage.setItem("level", level)
+      if(levels[level])
+        setObjects(levels[level])
+      else
+        alert("Game Over")
+    }
+  }
+
   if(!objects)
   {
     alert("Erreur")
@@ -22,7 +37,10 @@ export default function App({level}) {
         <color attach="background" args={['#223']} />
         <Scene>
           {/* Any object in here will receive ray events */}
-          {objects.map((object) =>  object )}
+          {objects.map((object) =>  {
+            console.log("object")
+            return object
+            } )}
         </Scene>
         <EffectComposer>
           <Bloom mipmapBlur luminanceThreshold={2} luminanceSmoothing={0.0} intensity={1} />
