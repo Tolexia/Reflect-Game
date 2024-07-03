@@ -6,22 +6,24 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import { Reflect } from './Reflect'
 import levels from './levels'
 
+
 export default function App({level}) {
   
+  console.log(level)
   const [objects, setObjects] = useState(levels[level])
+  const labelRef = useRef(null)
 
-  function next_level(data)
+  const next_level = function ()
   {
-    // console.log("data",data)
-    if(data.game_over)
+    level++
+    localStorage.setItem("level", level)
+    if(levels[level])
     {
-      level++
-      localStorage.setItem("level", level)
-      if(levels[level])
-        setObjects(levels[level])
-      else
-        alert("Game Over")
+      if(labelRef.content) labelRef.content.innerText = `Level ${level}`
+      setObjects(levels[level])
     }
+    else
+      alert("Game Over")
   }
 
   if(!objects)
@@ -29,17 +31,18 @@ export default function App({level}) {
     alert("Erreur")
     return
   }
+
   
   return (
     <>
-      <h1 className='level-label '>Level {level}</h1>
+      <h1 className='level-label ' ref = {labelRef}>Level {level}</h1>
       <Canvas orthographic camera={{ zoom: 100 }}>
         <color attach="background" args={['#223']} />
         <Scene>
+          {/* <Foo scale={0.5} position={[2.5, -0.15, 0]}/> */}
           {/* Any object in here will receive ray events */}
-          {objects.map((object) =>  {
-            console.log("object")
-            return object
+          {objects.map((Object) =>  {
+            return <Object.type {...Object.props} next_level={next_level} />
             } )}
         </Scene>
         <EffectComposer>
