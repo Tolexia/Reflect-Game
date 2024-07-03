@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
@@ -12,15 +12,19 @@ export default function App({level}) {
   console.log(level)
   const [objects, setObjects] = useState(levels[level])
   const labelRef = useRef(null)
+  const containerRef = useRef(null)
 
   const next_level = function ()
   {
+    containerRef.current.classList.remove("visible")
     level++
     localStorage.setItem("level", level)
     if(levels[level])
     {
-      if(labelRef.content) labelRef.content.innerText = `Level ${level}`
-      setObjects(levels[level])
+      setTimeout(() => {
+        if(labelRef.current) labelRef.current.innerText = `Level ${level}`
+        setObjects(levels[level])
+      }, 2000);
     }
     else
       alert("Game Over")
@@ -32,24 +36,33 @@ export default function App({level}) {
     return
   }
 
+  useEffect(() => {
+    console.log("useEffet")
+    console.log("containerRef", containerRef)
+    if(containerRef.current)
+    {
+      containerRef.current.classList.add("visible")
+    }
+  },[objects])
+
   
   return (
-    <>
+    <div className='container' ref={containerRef}>
       <h1 className='level-label ' ref = {labelRef}>Level {level}</h1>
       <Canvas orthographic camera={{ zoom: 100 }}>
         <color attach="background" args={['#223']} />
         <Scene>
           {/* <Foo scale={0.5} position={[2.5, -0.15, 0]}/> */}
           {/* Any object in here will receive ray events */}
-          {objects.map((Object) =>  {
-            return <Object.type {...Object.props} next_level={next_level} />
+          {objects.map((Object, i) =>  {
+            return <Object.type key={i} {...Object.props} next_level={next_level} />
             } )}
         </Scene>
         <EffectComposer>
           <Bloom mipmapBlur luminanceThreshold={2} luminanceSmoothing={0.0} intensity={1} />
         </EffectComposer>
       </Canvas>
-    </>
+    </div>
   )
 }
 
@@ -68,7 +81,13 @@ function Scene({ children }) {
   let i = 0
   let range = 0
 
+  let last_exec = Date.now()
   useFrame((state) => {
+    if(last_exec < Date.now() - 2000)
+      {
+        console.log(state)
+        last_exec = Date.now()
+      }
     reflect.current.setRay(
       [(state.pointer.x * state.viewport.width) / 2, (state.pointer.y * state.viewport.height) / 2, 0],
       [state.pointer.x * 1.5, state.pointer.y * 1.5, 0]

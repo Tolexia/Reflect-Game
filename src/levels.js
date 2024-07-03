@@ -1,10 +1,14 @@
 import { useState } from "react"
 
+let level_won = false
 function handle_hovered(data, next_level)
 {
-  if(data.game_over)
+  if(data.game_over && !level_won)
   {
-    next_level()
+    level_won = true
+    setTimeout(() => {
+      next_level()
+    }, 1000);
   }
 }
 
