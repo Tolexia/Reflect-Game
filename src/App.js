@@ -9,8 +9,7 @@ import levels from './levels'
 
 export default function App({level}) {
   
-  console.log(level)
-  const [objects, setObjects] = useState(levels[level])
+  const [objects, setObjects] = useState([])
   const labelRef = useRef(null)
   const containerRef = useRef(null)
 
@@ -19,7 +18,7 @@ export default function App({level}) {
     containerRef.current.classList.remove("visible")
     level++
     localStorage.setItem("level", level)
-	console.log("level", level);
+	console.log("next_level", level);
     if(levels[level])
     {
       setTimeout(() => {
@@ -28,18 +27,22 @@ export default function App({level}) {
       }, 2000);
     }
 	else 
-		window.location.reload();
+    {
+        alert("Game Over")
+        level = 1
+        localStorage.setItem("level", 1)
+        setTimeout(() => {
+            if(labelRef.current) labelRef.current.innerText = `Level ${level}`
+            setObjects(levels[level])
+          }, 2000);
+    }
   }
 
-	if(!objects)
-	{
-    	alert("Game Over")
-		localStorage.setItem("level", 1)
-		window.location.reload();
-    	return
- 	}
 
   useEffect(() => {
+    level = +localStorage.getItem("level") 
+    if(labelRef.current) labelRef.current.innerText = `Level ${level}`
+    setObjects(levels[level])
     console.log("useEffet")
     console.log("containerRef", containerRef)
     if(containerRef.current)

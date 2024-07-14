@@ -1,26 +1,36 @@
 import { useState } from "react"
 
 let level_won = false
+let check_won = false
 function handle_hovered(data, next_level)
 {
   if(data.game_over && !level_won)
   {
     level_won = true
+	check_won = true
     setTimeout(() => {
-      next_level()
-      setTimeout(() => {
-        level_won = false
-      }, 1000);
+		if(!check_won)
+		{
+			level_won = false
+			return;
+		}
+		next_level()
+		setTimeout(() => {
+			level_won = false
+		}, 1000);
     }, 1000);
   }
 }
-
+function resetCheckWon()
+{
+	check_won = false
+}
 function Block(props) {
 
     // console.log(props)
     const [hovered, hover] = useState(false)
     return (
-      <mesh onRayOver={(e) => (hover(true), handle_hovered(e, props.next_level))} onRayOut={(e) => hover(false)} {...props}>
+      <mesh onRayOver={(e) => (hover(true), handle_hovered(e, props.next_level))} onRayOut={(e) => (hover(false),resetCheckWon())} {...props}>
         <boxGeometry />
         <meshBasicMaterial color={hovered ? [4, 2, 0] : 'orange'} />
       </mesh>
@@ -32,7 +42,7 @@ function Triangle(props) {
     return (
         <mesh {...props} 
         onRayOver={(e) => ( hover(true), handle_hovered(e, props.next_level))} 
-        onRayOut={(e) => hover(false)} 
+        onRayOut={(e) => (hover(false),resetCheckWon())} 
         // onRayMove={(e) => null /*console.log(e.direction)*/}
         >
         <cylinderGeometry args={[1, 1, 1, 3, 1]} />
@@ -45,7 +55,7 @@ function Disc(props) {
     return (
         <mesh {...props} 
         onRayOver={(e) => ( e.stopPropagation(),hover(true), handle_hovered(e, props.next_level))} 
-        onRayOut={(e) => hover(false)} 
+        onRayOut={(e) => (hover(false),resetCheckWon())} 
         // onRayMove={(e) => null /*console.log(e.direction)*/}
         >
         <sphereGeometry args={[0.5, 15, 15]} />
