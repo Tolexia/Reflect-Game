@@ -8,6 +8,9 @@ function handle_hovered(data, next_level)
     level_won = true
     setTimeout(() => {
       next_level()
+      setTimeout(() => {
+        level_won = false
+      }, 1000);
     }, 1000);
   }
 }
@@ -28,7 +31,7 @@ function Triangle(props) {
     const [hovered, hover] = useState(false)
     return (
         <mesh {...props} 
-        onRayOver={(e) => (e.stopPropagation(), hover(true), handle_hovered(e, props.next_level))} 
+        onRayOver={(e) => ( hover(true), handle_hovered(e, props.next_level))} 
         onRayOut={(e) => hover(false)} 
         // onRayMove={(e) => null /*console.log(e.direction)*/}
         >
@@ -41,7 +44,7 @@ function Disc(props) {
     const [hovered, hover] = useState(false)
     return (
         <mesh {...props} 
-        onRayOver={(e) => ( hover(true), handle_hovered(e, props.next_level))} 
+        onRayOver={(e) => ( e.stopPropagation(),hover(true), handle_hovered(e, props.next_level))} 
         onRayOut={(e) => hover(false)} 
         // onRayMove={(e) => null /*console.log(e.direction)*/}
         >
@@ -61,10 +64,10 @@ const level1 =  [
 levels[1] = level1 
 
 const level2 =  [
-    <Block scale={0.5} position={[-2.5, -2.5, 0]} />,
+    <Block scale={0.5} position={[-2.5, -2.5, 0]} rotation={[0, 0, -0.65]} />,
     <Disc scale={0.5} position={[2.5, -2.5, 0]} />,
     <Block scale={0.5} position={[-2, 1.2, 0]} rotation={[0, 0, -0.55]} />,
-    <Triangle scale={0.4} position={[2.5, 0, 0]} rotation={[Math.PI / 2, Math.PI, 0]} />
+    <Triangle scale={0.4} position={[2.5, -0.5, 0]} rotation={[Math.PI / 2, 2.4, 0]} />
 ]
 levels[2] = level2 
 

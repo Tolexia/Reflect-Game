@@ -1,6 +1,6 @@
+import { useRef, useState, useEffect } from 'react'
 import * as THREE from 'three'
-import { useEffect, useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import { Reflect } from './Reflect'
@@ -19,6 +19,7 @@ export default function App({level}) {
     containerRef.current.classList.remove("visible")
     level++
     localStorage.setItem("level", level)
+	console.log("level", level);
     if(levels[level])
     {
       setTimeout(() => {
@@ -26,15 +27,17 @@ export default function App({level}) {
         setObjects(levels[level])
       }, 2000);
     }
-    else
-      alert("Game Over")
+	else 
+		window.location.reload();
   }
 
-  if(!objects)
-  {
-    alert("Erreur")
-    return
-  }
+	if(!objects)
+	{
+    	alert("Game Over")
+		localStorage.setItem("level", 1)
+		window.location.reload();
+    	return
+ 	}
 
   useEffect(() => {
     console.log("useEffet")
@@ -78,34 +81,83 @@ function Scene({ children }) {
   const t = new THREE.Vector3()
   const n = new THREE.Vector3()
 
-  let i = 0
-  let range = 0
+  const [isMouseDown, setIsMouseDown] = useState(false)
+  const [rayPosition, setRayPosition] = useState(new THREE.Vector3())
+  const [rayRotation, setRayRotation] = useState(0)
+  const [initialClickPosition, setInitialClickPosition] = useState(new THREE.Vector2())
+//   const [initialRotation, setInitialRotation] = useState(0)
 
-  let last_exec = Date.now()
+  const { viewport } = useThree()
+
+  useEffect(() => {
+	const handleMouseDown = (event) => {
+		setIsMouseDown(true)
+		const x = (event.clientX / window.innerWidth) * 2 - 1
+		const y = -(event.clientY / window.innerHeight) * 2 + 1
+		setInitialClickPosition(new THREE.Vector2(x, y))
+		// const currentRotation = Math.atan2(y, x)
+		// setInitialRotation(currentRotation)
+		// setRayRotation(currentRotation)
+	}
+    const handleMouseUp = () => setIsMouseDown(false)
+
+    window.addEventListener('mousedown', handleMouseDown)
+    window.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      window.removeEventListener('mousedown', handleMouseDown)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [])
+
   useFrame((state) => {
-    if(last_exec < Date.now() - 2000)
-      {
-        console.log(state)
-        last_exec = Date.now()
-      }
-    reflect.current.setRay(
-      [(state.pointer.x * state.viewport.width) / 2, (state.pointer.y * state.viewport.height) / 2, 0],
-      [state.pointer.x * 1.5, state.pointer.y * 1.5, 0]
-    )
-    range = reflect.current.update()
+    const { pointer, clock } = state
 
-    for (i = 0; i < range - 1; i++) {
-      // Position 1
+    // Update ray position when mouse is not clicked
+    if (!isMouseDown) {
+      setRayPosition(new THREE.Vector3(
+        (pointer.x * viewport.width) / 2,
+        (pointer.y * viewport.height) / 2,
+        0
+      ))
+    }
+
+	// Mettre à jour la rotation du rayon lorsque la souris est cliquée et déplacée
+	if (isMouseDown) {
+		// Calculer la distance entre la position initiale et la position actuelle
+		const dx = pointer.x - initialClickPosition.x
+		const dy = pointer.y - initialClickPosition.y
+		const distance = Math.sqrt(dx * dx + dy * dy)
+
+		// Calculer l'angle entre la position initiale et la position actuelle
+		const currentAngle = Math.atan2(dy, dx)
+
+		// Appliquer une fonction de lissage pour que la rotation soit plus douce
+		const smoothingFactor = Math.min(distance * 2, 1) // Ajustez le facteur 2 pour contrôler la sensibilité
+
+		// Calculer la nouvelle rotation
+		const newRotation = rayRotation + (currentAngle - rayRotation) * smoothingFactor
+
+		setRayRotation(newRotation)
+	}
+
+	// Calculer le point final en fonction de la position et de la rotation actuelles
+	const endPoint = new THREE.Vector3(
+		rayPosition.x + Math.cos(rayRotation) * 1.5,
+		rayPosition.y + Math.sin(rayRotation) * 1.5,
+		0
+	)
+
+	reflect.current.setRay([rayPosition.x, rayPosition.y, 0], [endPoint.x, endPoint.y, 0])
+	const range = reflect.current.update()
+
+    // Rest of the code for updating streaks and glow remains the same
+    for (let i = 0; i < range - 1; i++) {
       f.fromArray(reflect.current.positions, i * 3)
-      // Position 2
       t.fromArray(reflect.current.positions, i * 3 + 3)
-      // Calculate normal
       n.subVectors(t, f).normalize()
-      // Calculate mid-point
       obj.position.addVectors(f, t).divideScalar(2)
-      // Stretch by using the distance
       obj.scale.set(t.distanceTo(f) * 3, 6, 1)
-      // Convert rotation to euler z
       obj.rotation.set(0, 0, Math.atan2(n.y, n.x))
       obj.updateMatrix()
       streaks.current.setMatrixAt(i, obj.matrix)
@@ -115,15 +167,14 @@ function Scene({ children }) {
     streaks.current.instanceMatrix.updateRange.count = (range - 1) * 16
     streaks.current.instanceMatrix.needsUpdate = true
 
-    // First glow isn't shown
     obj.scale.setScalar(0)
     obj.updateMatrix()
     glow.current.setMatrixAt(0, obj.matrix)
 
-    for (i = 1; i < range; i++) {
+    for (let i = 1; i < range; i++) {
       obj.position.fromArray(reflect.current.positions, i * 3)
       obj.scale.setScalar(1)
-      obj.rotation.set(0, 0, state.clock.elapsedTime / 10)
+      obj.rotation.set(0, 0, clock.elapsedTime / 10)
       obj.updateMatrix()
       glow.current.setMatrixAt(i, obj.matrix)
     }
@@ -138,12 +189,10 @@ function Scene({ children }) {
       <Reflect ref={reflect} far={10} bounce={10} start={[10, 5, 0]} end={[0, 0, 0]}>
         {children}
       </Reflect>
-      {/* Draw stretched pngs to represent the reflect positions */}
       <instancedMesh ref={streaks} args={[null, null, 100]} instanceMatrix-usage={THREE.DynamicDrawUsage}>
         <planeGeometry />
         <meshBasicMaterial map={streakTexture} transparent opacity={1} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
       </instancedMesh>
-      {/* Draw glowing dots on the contact points */}
       <instancedMesh ref={glow} args={[null, null, 100]} instanceMatrix-usage={THREE.DynamicDrawUsage}>
         <planeGeometry />
         <meshBasicMaterial map={glowTexture} transparent opacity={1} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
