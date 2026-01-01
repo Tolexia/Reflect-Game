@@ -8,7 +8,7 @@ export default defineConfig({
   publicDir: '../public/',
   base: './',
   build: {
-    outDir: 'build',
+    outDir: '../build',
     emptyOutDir: true, // Empty the folder first
     sourcemap: true // Add sourcemap
   },
