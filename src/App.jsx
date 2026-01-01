@@ -19,7 +19,7 @@ export default function App({level}) {
     containerRef.current.classList.remove("visible")
     level++
     localStorage.setItem("level", level)
-	console.log("next_level", level);
+	// console.log("next_level", level);
     if(levels[level])
     {
       setTimeout(() => {
@@ -44,8 +44,8 @@ export default function App({level}) {
     level = +localStorage.getItem("level") 
     if(labelRef.current) labelRef.current.innerText = `Level ${level}`
     setObjects(levels[level])
-    console.log("useEffet")
-    console.log("containerRef", containerRef)
+    // console.log("useEffet")
+    // console.log("containerRef", containerRef)
     if(containerRef.current)
     {
       containerRef.current.classList.add("visible")
