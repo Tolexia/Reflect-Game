@@ -10,6 +10,7 @@ import levels from './levels'
 export default function App({level}) {
   
   const [objects, setObjects] = useState([])
+  const [showInstructions, setShowInstructions] = useState(true)
   const labelRef = useRef(null)
   const containerRef = useRef(null)
 
@@ -28,7 +29,7 @@ export default function App({level}) {
     }
 	else 
     {
-        alert("Game Over")
+        alert("CONGRATS ! You completed the game")
         level = 1
         localStorage.setItem("level", 1)
         setTimeout(() => {
@@ -51,9 +52,23 @@ export default function App({level}) {
     }
   },[objects])
 
+  useEffect(() => {
+    // Masquer les instructions après 4 secondes
+    const timer = setTimeout(() => {
+      setShowInstructions(false)
+    }, 4000)
+
+    return () => clearTimeout(timer)
+  }, [])
+
   
   return (
     <div className='container' ref={containerRef}>
+      {showInstructions && (
+        <div className='instructions'>
+          Hold click and hover to enlighten each shape
+        </div>
+      )}
       <h1 className='level-label ' ref = {labelRef}>Level {level}</h1>
       <Canvas orthographic camera={{ zoom: 100 }}>
         <color attach="background" args={['#223']} />

@@ -1,7 +1,7 @@
 {
-  "name": "laser-streak",
+  "name": "reflection-game",
   "version": "1.0.0",
-  "description": "",
+  "description": "A game where you reflect light on shapes to complete levels",
   "keywords": [],
   "main": "src/index.js",
   "dependencies": {
