@@ -92,7 +92,7 @@ function Scene({ children }) {
   const streaks = useRef()
   const glow = useRef()
   const reflect = useRef()
-  const [streakTexture, glowTexture] = useTexture(['/lensflare/lensflare2.png', '/lensflare/lensflare0_bw.jpg'])
+  const [streakTexture, glowTexture] = useTexture(['./lensflare/lensflare2.png', './lensflare/lensflare0_bw.jpg'])
 
   const obj = new THREE.Object3D()
   const f = new THREE.Vector3()
