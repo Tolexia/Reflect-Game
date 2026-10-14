@@ -4,7 +4,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import { Reflect } from './Reflect'
-import levels from './levels'
+import levels, { isLevelValidating } from './levels'
 
 
 export default function App({level}) {
@@ -130,34 +130,38 @@ function Scene({ children }) {
 
   useFrame((state) => {
     const { pointer, clock } = state
+    const validating = isLevelValidating()
 
-    // Update ray position when mouse is not clicked
-    if (!isMouseDown) {
-      setRayPosition(new THREE.Vector3(
-        (pointer.x * viewport.width) / 2,
-        (pointer.y * viewport.height) / 2,
-        0
-      ))
+    // Freeze the ray while level validation is in progress
+    if (!validating) {
+      // Update ray position when mouse is not clicked
+      if (!isMouseDown) {
+        setRayPosition(new THREE.Vector3(
+          (pointer.x * viewport.width) / 2,
+          (pointer.y * viewport.height) / 2,
+          0
+        ))
+      }
+
+      // Mettre à jour la rotation du rayon lorsque la souris est cliquée et déplacée
+      if (isMouseDown) {
+        // Calculer la distance entre la position initiale et la position actuelle
+        const dx = pointer.x - initialClickPosition.x
+        const dy = pointer.y - initialClickPosition.y
+        const distance = Math.sqrt(dx * dx + dy * dy)
+
+        // Calculer l'angle entre la position initiale et la position actuelle
+        const currentAngle = Math.atan2(dy, dx)
+
+        // Appliquer une fonction de lissage pour que la rotation soit plus douce
+        const smoothingFactor = Math.min(distance * 2, 1) // Ajustez le facteur 2 pour contrôler la sensibilité
+
+        // Calculer la nouvelle rotation
+        const newRotation = rayRotation + (currentAngle - rayRotation) * smoothingFactor
+
+        setRayRotation(newRotation)
+      }
     }
-
-	// Mettre à jour la rotation du rayon lorsque la souris est cliquée et déplacée
-	if (isMouseDown) {
-		// Calculer la distance entre la position initiale et la position actuelle
-		const dx = pointer.x - initialClickPosition.x
-		const dy = pointer.y - initialClickPosition.y
-		const distance = Math.sqrt(dx * dx + dy * dy)
-
-		// Calculer l'angle entre la position initiale et la position actuelle
-		const currentAngle = Math.atan2(dy, dx)
-
-		// Appliquer une fonction de lissage pour que la rotation soit plus douce
-		const smoothingFactor = Math.min(distance * 2, 1) // Ajustez le facteur 2 pour contrôler la sensibilité
-
-		// Calculer la nouvelle rotation
-		const newRotation = rayRotation + (currentAngle - rayRotation) * smoothingFactor
-
-		setRayRotation(newRotation)
-	}
 
 	// Calculer le point final en fonction de la position et de la rotation actuelles
 	const endPoint = new THREE.Vector3(
